@@ -2,10 +2,12 @@ from flask import Flask, request, send_file, jsonify
 import qrcode
 from io import BytesIO
 import base64
-import argparse
-import socket
+import logging
 
 app = Flask(__name__)
+
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
 
 @app.route('/generar-qr', methods=['POST'])
 def generar_qr():
@@ -89,7 +91,7 @@ def generar_qr_get():
                 width = int(dimensions[0])
                 height = int(dimensions[1])
             except:
-                return jsonify({'error': 'Formato de size inválido. Ej formato: 300x300 o 300_300'}), 400
+                return jsonify({'error': 'Formato de size inválido. Use formato: 300x300 o 300_300'}), 400
         else:
             box_size = int(size_param)
         
@@ -123,28 +125,19 @@ def health():
     return jsonify({'status': 'ok', 'message': 'API funcionando correctamente'})
 
 if __name__ == '__main__':
-    START_PORT = 5000
-    MAX_PORT = 5005
+    import socket
     
-    current_port = START_PORT
-    while current_port <= MAX_PORT:
-        try:
-            print(f"Intentando iniciar la aplicación en el puerto {current_port}...")
-            app.run(host='0.0.0.0', port=current_port)
-            
-            break 
-            
-        except OSError as e:
-            if "Address already in use" in str(e):
-                print(f"El puerto {current_port} ya está ocupado. Probando el siguiente puerto...")
-                current_port += 1
-            else:
-                print(f"Error inesperado al intentar iniciar en el puerto {current_port}: {e}")
-                break
-        
-        except Exception as e:
-            print(f"Ocurrió un error al iniciar el servidor: {e}")
-            break
-
-    if current_port > MAX_PORT:
-        print(f"ERROR: No se pudo iniciar la aplicación. Todos los puertos de {START_PORT} a {MAX_PORT} están ocupados.")
+    def encontrar_puerto_disponible(puerto_inicial=5000, puerto_maximo=5100):
+        for puerto in range(puerto_inicial, puerto_maximo):
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.bind(('0.0.0.0', puerto))
+                sock.close()
+                return puerto
+            except OSError:
+                continue
+        raise RuntimeError(f"No se encontró un puerto disponible entre {puerto_inicial} y {puerto_maximo}")
+    
+    puerto = encontrar_puerto_disponible()
+    print(f"Servidor iniciado en http://127.0.0.1:{puerto}")
+    app.run(host='0.0.0.0', port=puerto)
