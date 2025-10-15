@@ -45,10 +45,16 @@ pip install flask qrcode[pil]
 ### Iniciar el servidor
 
 ```bash
-python Main.py
+python generar_qr.py
 ```
 
-El servidor se iniciará en `http://127.0.0.1:5000`
+El servidor buscará automáticamente un puerto disponible entre 5000 y 5100. Verás un mensaje indicando en qué puerto se inició:
+
+```
+Servidor iniciado en http://127.0.0.1:5000
+```
+
+Si el puerto 5000 está ocupado, se asignará automáticamente el siguiente disponible (5001, 5002, etc.)
 
 ## Endpoints
 
